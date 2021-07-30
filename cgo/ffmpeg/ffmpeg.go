@@ -1,28 +1,34 @@
+/*
+ * @Description:
+ * @Author: dotwoo@gmail.com
+ * @Github: https://github.com/dotwoo
+ * @Date: 2021-07-22 13:10:06
+ * @FilePath: /joy4/cgo/ffmpeg/ffmpeg.go
+ */
 package ffmpeg
 
 /*
-#cgo LDFLAGS: -lavformat -lavutil -lavcodec -lavresample -lswscale
+#cgo LDFLAGS: -lavformat -lavutil -lavcodec
 #include "ffmpeg.h"
-void ffinit() {
-	av_register_all();
-}
+#include <libavutil/log.h>
 */
 import "C"
+
 import (
 	"runtime"
 	"unsafe"
 )
 
 const (
-	QUIET = int(C.AV_LOG_QUIET)
-	PANIC = int(C.AV_LOG_PANIC)
-	FATAL = int(C.AV_LOG_FATAL)
-	ERROR = int(C.AV_LOG_ERROR)
+	QUIET   = int(C.AV_LOG_QUIET)
+	PANIC   = int(C.AV_LOG_PANIC)
+	FATAL   = int(C.AV_LOG_FATAL)
+	ERROR   = int(C.AV_LOG_ERROR)
 	WARNING = int(C.AV_LOG_WARNING)
-	INFO = int(C.AV_LOG_INFO)
+	INFO    = int(C.AV_LOG_INFO)
 	VERBOSE = int(C.AV_LOG_VERBOSE)
-	DEBUG = int(C.AV_LOG_DEBUG)
-	TRACE = int(C.AV_LOG_TRACE)
+	DEBUG   = int(C.AV_LOG_DEBUG)
+	TRACE   = int(C.AV_LOG_TRACE)
 )
 
 func HasEncoder(name string) bool {
@@ -38,10 +44,6 @@ func HasDecoder(name string) bool {
 
 func SetLogLevel(level int) {
 	C.av_log_set_level(C.int(level))
-}
-
-func init() {
-	C.ffinit()
 }
 
 type ffctx struct {
@@ -71,4 +73,3 @@ func freeFFCtx(self *ffctx) {
 		C.av_dict_free(&ff.options)
 	}
 }
-
