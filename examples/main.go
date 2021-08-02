@@ -8,8 +8,12 @@
 package main
 
 import (
+	"bytes"
+	"context"
 	"fmt"
-	"time"
+	"image"
+	"image/jpeg"
+	"io/ioutil"
 
 	"github.com/dotwoo/joy4"
 	"github.com/dotwoo/joy4/format"
@@ -24,17 +28,32 @@ var (
 )
 
 func main() {
-	i := 0
-	for {
-		i++
-		start := time.Now()
-		bs, err := joy4.Capture(testURL)
-		if err != nil {
-			fmt.Println("capture error:", err)
-			continue
-		}
+	imgCh := make(chan image.Image, 10)
+	ctx, cancel := context.WithCancel(context.Background())
 
-		println("times:", i, "use:", time.Since(start).String(), "write length:", len(bs))
-		// ioutil.WriteFile("/tmp/dec.jpg", bs, 0644)
+	go func() {
+		err := joy4.StreamRead(ctx, testURL, 2, 10, imgCh)
+		if err != nil {
+
+			fmt.Println("capture error:", err)
+		}
+		close(imgCh)
+	}()
+
+	i := 0
+	for img := range imgCh {
+		var imageBuf bytes.Buffer
+		_ = jpeg.Encode(&imageBuf, img, nil)
+		ioutil.WriteFile(fmt.Sprintf("/tmp/te%d.jpg", i), imageBuf.Bytes(), 0644)
+		println("write", i)
+		i++
+		if i > 10 {
+			close(imgCh)
+			cancel()
+		}
 	}
+
+	println("write ims", i)
+	// ioutil.WriteFile("/tmp/dec.jpg", bs, 0644)
+
 }

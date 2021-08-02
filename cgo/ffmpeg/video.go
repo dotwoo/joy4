@@ -4,15 +4,34 @@ package ffmpeg
 #cgo LDFLAGS: -lavformat -lavutil -lavcodec
 #cgo pkg-config: libavcodec
 #include "ffmpeg.h"
-int wrap_avcodec_decode_video2(AVCodecContext *ctx, AVFrame *frame, void *data, int size) {
-        struct AVPacket pkt = {.data = data, .size = size};
+int wrap_avcodec_decode_video2(AVCodecContext *ctx, AVFrame *frame, void *data, int size,int i) {
+        struct AVPacket pkt = {.data = data, .size = size, .pts = i, .dts = i};
         // return avcodec_decode_video2(ctx, frame, got, &pkt);
         int ret = 0;
         ret =  avcodec_send_packet(ctx, &pkt);
         if (ret != 0) {
-                return ret;
+                return ret ;
         }
         return avcodec_receive_frame(ctx, frame);
+
+}
+
+int wrap_avcodec_feed_video2(AVCodecContext *ctx, void *data, int size,int i) {
+        struct AVPacket pkt = {.data = data, .size = size, .pts = i, .dts = i};
+        // return avcodec_decode_video2(ctx, frame, got, &pkt);
+        int ret = 0;
+        ret =  avcodec_send_packet(ctx, &pkt);
+        if (ret != 0) {
+                return ret ;
+        }
+		AVFrame *fr = NULL;
+        fr = av_frame_alloc();
+        if (!fr) {
+            return AVERROR(ENOMEM);
+        }
+		ret = avcodec_receive_frame(ctx, fr);
+		av_frame_free(&fr);
+		return ret;
 
 }
 */
@@ -63,7 +82,7 @@ type VideoFrame struct {
 }
 
 func (self *VideoFrame) Free() {
-	self.Image = image.YCbCr{}
+	// self.Image = image.YCbCr{}
 	C.av_frame_free(&self.frame)
 }
 
@@ -71,11 +90,21 @@ func freeVideoFrame(self *VideoFrame) {
 	self.Free()
 }
 
-func (self *VideoDecoder) Decode(pkt []byte) (img *VideoFrame, err error) {
+func (self *VideoDecoder) FeedFrame(pkt []byte, i int) (err error) {
+	ff := &self.ff.ff
+	cerr := C.wrap_avcodec_feed_video2(ff.codecCtx, unsafe.Pointer(&pkt[0]), C.int(len(pkt)), C.int(i))
+	if cerr < C.int(0) {
+		err = fmt.Errorf("ffmpeg: wrap_avcodec_feed_video2 failed: %d", cerr)
+		return
+	}
+	return
+}
+
+func (self *VideoDecoder) Decode(pkt []byte, i int) (img *VideoFrame, err error) {
 	ff := &self.ff.ff
 
 	frame := C.av_frame_alloc()
-	cerr := C.wrap_avcodec_decode_video2(ff.codecCtx, frame, unsafe.Pointer(&pkt[0]), C.int(len(pkt)))
+	cerr := C.wrap_avcodec_decode_video2(ff.codecCtx, frame, unsafe.Pointer(&pkt[0]), C.int(len(pkt)), C.int(i))
 	if cerr < C.int(0) {
 		err = fmt.Errorf("ffmpeg: avcodec_decode_video2 failed: %d", cerr)
 		return

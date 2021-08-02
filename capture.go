@@ -70,7 +70,7 @@ func Capture(streamURL string) (out []byte, err error) {
 			// fmt.Println("pkt", i, streams[pkt.Idx].Type(), "len", len(pkt.Data), "keyframe", pkt.IsKeyFrame)
 			fmt.Println("len", len(pkt.Data))
 			file.Close()
-			img, err := dec.Decode(pkt.Data)
+			img, err := dec.Decode(pkt.Data, 0)
 			if err != nil {
 				return nil, err
 			}
