@@ -13,6 +13,7 @@ import (
 	"errors"
 	"fmt"
 	"image/jpeg"
+	"strings"
 
 	"github.com/dotwoo/joy4/av"
 	"github.com/dotwoo/joy4/av/avutil"
@@ -57,26 +58,24 @@ func Capture(streamURL string) (out []byte, err error) {
 		return nil, err
 	}
 
-	// var err error
 	for i := 0; i < 10; i++ {
 		var pkt av.Packet
 		if pkt, err = file.ReadPacket(); err != nil {
 			return nil, err
 		}
 		// fmt.Println("pkt", i, streams[pkt.Idx].Type(), "len", len(pkt.Data), "keyframe", pkt.IsKeyFrame)
-		if pkt.IsKeyFrame &&
-			streams[pkt.Idx].Type() == av.H264 &&
-			len(pkt.Data) > 5000 {
+		if streams[pkt.Idx].Type() == av.H264 {
 			// fmt.Println("pkt", i, streams[pkt.Idx].Type(), "len", len(pkt.Data), "keyframe", pkt.IsKeyFrame)
-			fmt.Println("len", len(pkt.Data))
-			file.Close()
-			img, err := dec.Decode(pkt.Data, 0)
+			img, err := dec.Decode(pkt.Data, i)
 			if err != nil {
+				if strings.HasSuffix(err.Error(), "11") {
+					continue
+				}
 				return nil, err
 			}
 			defer img.Free()
 
-			if len(pkt.Data) > 5000 {
+			if len(pkt.Data) > 10 {
 				buf := new(bytes.Buffer)
 				err = jpeg.Encode(buf, &img.Image, nil)
 				if err != nil {
@@ -87,7 +86,4 @@ func Capture(streamURL string) (out []byte, err error) {
 		}
 	}
 	return nil, captureErr
-
-	// fmt.Println("pkt", streams[pkt.Idx].Type(), "len", len(pkt.Data), "keyframe", pkt.IsKeyFrame)
-
 }
