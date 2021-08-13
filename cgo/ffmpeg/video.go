@@ -106,6 +106,7 @@ func (self *VideoDecoder) Decode(pkt []byte, i int) (img *VideoFrame, err error)
 	frame := C.av_frame_alloc()
 	cerr := C.wrap_avcodec_decode_video2(ff.codecCtx, frame, unsafe.Pointer(&pkt[0]), C.int(len(pkt)), C.int(i))
 	if cerr < C.int(0) {
+		C.av_frame_free(&frame)
 		err = fmt.Errorf("ffmpeg: avcodec_decode_video2 failed: %d", cerr)
 		return
 	}
