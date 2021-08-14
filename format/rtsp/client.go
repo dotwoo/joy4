@@ -94,6 +94,10 @@ func DialTimeout(uri string, timeout time.Duration) (self *Client, err error) {
 		URL.Host = URL.Host + ":554"
 	}
 
+	if timeout < time.Second {
+		timeout = time.Second * 10
+	}
+
 	dailer := net.Dialer{Timeout: timeout}
 	var conn net.Conn
 	if conn, err = dailer.Dial("tcp", URL.Host); err != nil {
@@ -106,13 +110,15 @@ func DialTimeout(uri string, timeout time.Duration) (self *Client, err error) {
 	connt := &connWithTimeout{Conn: conn}
 
 	self = &Client{
-		conn:            connt,
-		brconn:          bufio.NewReaderSize(connt, 256),
-		url:             URL,
-		requestUri:      u2.String(),
-		DebugRtp:        DebugRtp,
-		DebugRtsp:       DebugRtsp,
-		SkipErrRtpBlock: SkipErrRtpBlock,
+		conn:                connt,
+		brconn:              bufio.NewReaderSize(connt, 256),
+		url:                 URL,
+		requestUri:          u2.String(),
+		DebugRtp:            DebugRtp,
+		DebugRtsp:           DebugRtsp,
+		SkipErrRtpBlock:     SkipErrRtpBlock,
+		RtpKeepAliveTimeout: time.Second * 6,
+		RtspTimeout:         timeout,
 	}
 	return
 }
