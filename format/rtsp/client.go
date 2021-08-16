@@ -29,7 +29,7 @@ var ErrCodecDataChange = fmt.Errorf("rtsp: codec data change, please call Handle
 
 var DebugRtp = false
 var DebugRtsp = false
-var SkipErrRtpBlock = false
+var SkipErrRtpBlock = true
 
 const (
 	stageDescribeDone = iota + 1
@@ -117,7 +117,7 @@ func DialTimeout(uri string, timeout time.Duration) (self *Client, err error) {
 		DebugRtp:            DebugRtp,
 		DebugRtsp:           DebugRtsp,
 		SkipErrRtpBlock:     SkipErrRtpBlock,
-		RtpKeepAliveTimeout: time.Second * 6,
+		RtpKeepAliveTimeout: 30 * time.Second,
 		RtspTimeout:         timeout,
 	}
 	return
@@ -195,12 +195,14 @@ func (self *Client) SendRtpKeepalive() (err error) {
 		} else if time.Now().Sub(self.rtpKeepaliveTimer) > self.RtpKeepAliveTimeout {
 			self.rtpKeepaliveTimer = time.Now()
 			if self.DebugRtsp {
-				fmt.Println("rtp: keep alive")
+				fmt.Println("rtp: keep alive, session: ", self.session)
 			}
 			req := Request{
 				Method: "OPTIONS",
 				Uri:    self.requestUri,
 			}
+			req.Header = append(req.Header,
+				fmt.Sprintf("Session: %s", self.session))
 			if err = self.WriteRequest(req); err != nil {
 				return
 			}
