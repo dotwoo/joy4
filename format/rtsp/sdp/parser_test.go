@@ -5,7 +5,7 @@ import (
 )
 
 func TestParse(t *testing.T) {
-	infos := Decode(`
+	s, infos := Parse(`
 v=0
 o=- 1459325504777324 1 IN IP4 192.168.0.123
 s=RTSP/RTP stream from Network Video Server
@@ -40,5 +40,51 @@ a=rtpmap:0 PCMU/8000
 a=Media_header:MEDIAINFO=494D4B48010100000400010010710110401F000000FA000000000000000000000000000000000000;
 a=appversion:1.0
 `)
-	t.Logf("%v", infos)
+	t.Logf("%s,%+v\n", s, infos)
+
+	s, infos = Parse(`
+v=0
+o=- 5783354 0 IN IP4 192.168.100.3
+s=000-001_594008_61010102031320000028_ffcs.root.77d97fa4fa3bb25e64eb62e995e8eb75
+u=www.ffcs.cn
+e=ffcs@ffcs.cn
+c=IN IP4 192.168.100.3
+b=AS:5100
+t=0 0
+a=control:*
+m=video 0 RTP/AVP 96
+c=IN IP4 0.0.0.0
+b=AS:5000
+a=recvonly
+a=control:trackID=1
+a=rtpmap:96 H265/90000
+a=fmtp:98 profile-id=1;sprop-sps=QgEBAUAAAAMAAAMAAAMAAAMAmaACgIAuHxOWu5Gwa5VB;sprop-pps=RAHAc8BMkA==;sprop-vps=QAEMAf//AUAAAAMAAAMAAAMAAAMAmawJ
+m=audio 0 RTP/AVP 8
+a=recvonly
+b=AS:50
+a=rtpmap:8 PCMA/8000
+a=control:trackID=2
+a=Media_header:MEDIAINFO=494D4B48010100000400050000000000000000000000000000000000000000000000000000000000;
+a=appversion:1.0
+`)
+	t.Logf("%s,%+v\n", s, infos)
+
+	s, infos = Parse(`
+v=0
+o=- 2229913047 2229913047 IN IP4 0.0.0.0
+s=Media Server
+c=IN IP4 0.0.0.0
+t=0 0
+a=control:*
+a=packetization-supported:DH
+a=rtppayload-supported:DH
+a=range:npt=now-
+m=video 0 RTP/AVP 96
+a=control:trackID=0
+a=framerate:25.000000
+a=rtpmap:96 H264/90000
+a=fmtp:96 packetization-mode=1;profile-level-id=64002A;sprop-parameter-sets=Z2QAKqwsaoHgCJ+WbgoCCoAAAAMAgAAAGUIA,aO4xshsA
+a=recvonly
+`)
+	t.Logf("%s,%+v\n", s, infos)
 }

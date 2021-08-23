@@ -25,6 +25,9 @@ type Media struct {
 	PayloadType        int
 	SizeLength         int
 	IndexLength        int
+	SpropSPS           []byte
+	SpropPPS           []byte
+	SpropVPS           []byte
 }
 
 func Parse(content string) (sess Session, medias []Media) {
@@ -75,6 +78,8 @@ func Parse(content string) (sess Session, medias []Media) {
 								media.Type = av.AAC
 							case "H264":
 								media.Type = av.H264
+							case "H265":
+								media.Type = av.H265
 							}
 							if i, err := strconv.Atoi(keyval[1]); err == nil {
 								media.TimeScale = i
@@ -97,6 +102,15 @@ func Parse(content string) (sess Session, medias []Media) {
 										media.SizeLength, _ = strconv.Atoi(val)
 									case "indexlength":
 										media.IndexLength, _ = strconv.Atoi(val)
+									case "sprop-sps":
+										ct, _ := base64.StdEncoding.DecodeString(val)
+										media.SpropSPS = ct
+									case "sprop-pps":
+										ct, _ := base64.StdEncoding.DecodeString(val)
+										media.SpropPPS = ct
+									case "sprop-vps":
+										ct, _ := base64.StdEncoding.DecodeString(val)
+										media.SpropVPS = ct
 									case "sprop-parameter-sets":
 										fields := strings.Split(val, ",")
 										for _, field := range fields {
